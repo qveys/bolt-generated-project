@@ -11,12 +11,14 @@ import { NavOverlay } from './NavOverlay';
 import { MobileActions } from './MobileActions';
 import { useNavigationContext } from './NavigationContext';
 import { navigationItems } from '../../config/navigation';
+import { useMediaQuery } from '../../hooks/useMediaQuery';
 
 export const Nav: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { signOut } = useAuth();
   const { isOpen, close } = useNavigationContext();
+  const isDesktop = useMediaQuery('(min-width: 768px)');
 
   const handleLogout = async () => {
     try {
@@ -29,7 +31,10 @@ export const Nav: React.FC = () => {
   };
 
   const handleNavigation = (path: string) => {
-    close();
+    // Only close the menu on mobile
+    if (!isDesktop) {
+      close();
+    }
     navigate(path);
   };
 

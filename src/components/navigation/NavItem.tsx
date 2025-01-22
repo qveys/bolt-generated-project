@@ -4,6 +4,7 @@
  */
 import React from 'react';
 import { DivideIcon as LucideIcon } from 'lucide-react';
+import { useMediaQuery } from '../../hooks/useMediaQuery';
 
 interface NavItemProps {
   icon: LucideIcon;
@@ -22,9 +23,17 @@ export const NavItem: React.FC<NavItemProps> = ({
   onClick, 
   isMenuOpen 
 }) => {
+  const isDesktop = useMediaQuery('(min-width: 768px)');
+
+  const handleClick = () => {
+    if (onClick) {
+      onClick();
+    }
+  };
+
   return (
     <button
-      onClick={onClick}
+      onClick={handleClick}
       className={`
         w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors
         ${active 
@@ -32,12 +41,12 @@ export const NavItem: React.FC<NavItemProps> = ({
           : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
         }
         ${className}
-        ${!isMenuOpen && 'md:justify-center'}
+        ${!isMenuOpen && isDesktop ? 'md:justify-center' : ''}
       `}
-      title={!isMenuOpen ? text : undefined}
+      title={!isMenuOpen && isDesktop ? text : undefined}
     >
       <Icon className="h-6 w-6 flex-shrink-0" />
-      <span className={`transition-opacity duration-200 ${!isMenuOpen && 'md:hidden'}`}>
+      <span className={`transition-opacity duration-200 ${!isMenuOpen && isDesktop ? 'md:hidden' : ''}`}>
         {text}
       </span>
     </button>

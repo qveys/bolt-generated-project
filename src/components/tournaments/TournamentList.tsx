@@ -1,112 +1,85 @@
 import React from 'react';
-import { Trophy, Calendar, Users, Clock, ArrowRight } from 'lucide-react';
-import type { Tournament } from '../../types';
+import { useTournaments } from '../../hooks/useTournaments';
+import { Loading } from '../common/Loading';
+import { ErrorMessage } from '../common/ErrorMessage';
+import { Pagination } from '../common/Pagination';
+import type { TournamentFilters } from '../../types/tournament';
 
-const mockTournaments: Tournament[] = [
-  {
-    id: '1',
-    eventId: 'event1',
-    name: 'Summer Tennis Championship',
-    type: 'elimination',
-    status: 'active',
-    participants: ['user1', 'user2', 'user3', 'user4'],
-    matches: [
-      {
-        id: 'match1',
-        tournamentId: '1',
-        round: 1,
-        participant1: 'user1',
-        participant2: 'user2',
-        status: 'completed',
-        startTime: '2024-03-20T14:00:00Z',
-        score1: 6,
-        score2: 4
-      },
-      {
-        id: 'match2',
-        tournamentId: '1',
-        round: 1,
-        participant1: 'user3',
-        participant2: 'user4',
-        status: 'scheduled',
-        startTime: '2024-03-21T15:00:00Z'
-      }
-    ]
-  },
-  {
-    id: '2',
-    eventId: 'event2',
-    name: 'Regional Basketball Tournament',
-    type: 'groups',
-    status: 'pending',
-    participants: ['team1', 'team2', 'team3', 'team4', 'team5', 'team6'],
-    matches: []
+export const TournamentList: React.FC = () => {
+  const {
+    data: tournaments,
+    totalCount,
+    isLoading,
+    error,
+    filters,
+    pagination,
+    updateFilters,
+    updatePagination
+  } = useTournaments();
+
+  if (isLoading) {
+    return <Loading size="lg" />;
   }
-];
 
-const TournamentList: React.FC = () => {
+  if (error) {
+    return (
+      <ErrorMessage
+        title="Error loading tournaments"
+        message={error.message}
+        action={
+          <button
+            onClick={() => window.location.reload()}
+            className="text-sm text-blue-600 hover:text-blue-500"
+          >
+            Try again
+          </button>
+        }
+      />
+    );
+  }
+
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-gray-900">Tournaments</h2>
-        <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-          Create Tournament
-        </button>
+      {/* Filters */}
+      <div className="flex gap-4 bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
+        <select
+          value={filters.status}
+          onChange={(e) => updateFilters({ status: e.target.value as TournamentFilters['status'] })}
+          className="rounded-md border-gray-300 dark:border-gray-600"
+        >
+          <option value="">All Statuses</option>
+          <option value="scheduled">Scheduled</option>
+          <option value="in_progress">In Progress</option>
+          <option value="completed">Completed</option>
+        </select>
+        {/* Add more filters as needed */}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {mockTournaments.map((tournament) => (
-          <TournamentCard key={tournament.id} tournament={tournament} />
-        ))}
+      {/* Tournament List */}
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+        <div className="divide-y divide-gray-200 dark:divide-gray-700">
+          {tournaments.map((tournament) => (
+            <div
+              key={tournament.id}
+              className="p-6 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+            >
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+                {tournament.name}
+              </h3>
+              <div className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                {new Date(tournament.start_date).toLocaleDateString()}
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
+
+      {/* Pagination */}
+      <Pagination
+        currentPage={pagination.page}
+        totalPages={Math.ceil(totalCount / pagination.pageSize)}
+        onPageChange={(page) => updatePagination({ page })}
+      />
     </div>
   );
 };
-
-const TournamentCard: React.FC<{ tournament: Tournament }> = ({ tournament }) => {
-  const statusColors = {
-    pending: 'bg-yellow-100 text-yellow-800',
-    active: 'bg-green-100 text-green-800',
-    completed: 'bg-gray-100 text-gray-800'
-  };
-
-  return (
-    <div className="bg-white rounded-lg shadow-md overflow-hidden">
-      <div className="p-6">
-        <div className="flex justify-between items-start mb-4">
-          <div>
-            <h3 className="text-lg font-semibold text-gray-900">{tournament.name}</h3>
-            <span className={`inline-block px-2 py-1 text-sm rounded-full mt-2 ${statusColors[tournament.status]}`}>
-              {tournament.status.charAt(0).toUpperCase() + tournament.status.slice(1)}
-            </span>
-          </div>
-          <Trophy className="h-6 w-6 text-blue-600" />
-        </div>
-
-        <div className="space-y-3">
-          <div className="flex items-center text-sm text-gray-600">
-            <Calendar className="h-4 w-4 mr-2" />
-            <span>Type: {tournament.type}</span>
-          </div>
-          <div className="flex items-center text-sm text-gray-600">
-            <Users className="h-4 w-4 mr-2" />
-            <span>{tournament.participants.length} Participants</span>
-          </div>
-          <div className="flex items-center text-sm text-gray-600">
-            <Clock className="h-4 w-4 mr-2" />
-            <span>{tournament.matches.length} Matches</span>
-          </div>
-        </div>
-
-        <div className="mt-4 pt-4 border-t border-gray-100">
-          <button className="w-full flex items-center justify-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-500">
-            View Tournament Details
-            <ArrowRight className="h-4 w-4" />
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-export default TournamentList;
